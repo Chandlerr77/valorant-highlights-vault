@@ -20,7 +20,9 @@ export default async function HomePage() {
       <div className="grid gap-4">
         {clips?.map((clip) => (
           <div key={clip.id} className="border rounded p-4">
-            <p className="font-medium mb-2">{clip.title}</p>
+            <p className="font-medium mb-2">
+              {clip.title} {clip.tags && <span className="text-sm text-gray-400">· {clip.tags}</span>}
+            </p>
             <video src={clip.video_url} controls className="w-full rounded" />
           </div>
         ))}

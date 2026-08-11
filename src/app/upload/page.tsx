@@ -29,9 +29,27 @@ export default function UploadPage() {
       .from('clips')
       .getPublicUrl(fileName)
 
+    // AI 自动打标签
+    let tags = ''
+    let aiTitle = ''
+    try {
+      const { extractFrame } = await import('@/lib/extractFrame')
+      const frameBlob = await extractFrame(file)
+      const form = new FormData()
+      form.append('image', frameBlob, 'frame.jpg')
+      const res = await fetch('/api/tag-clip', { method: 'POST', body: form })
+      const data = await res.json()
+      const parsed = JSON.parse(data.raw)
+      tags = parsed.kills
+      aiTitle = parsed.title
+    } catch (e) {
+      console.error('AI 打标签失败，使用手动标题', e)
+    }
+
     const { error: insertError } = await supabase.from('clips').insert({
-      title: title || file.name,
+      title: title || aiTitle || file.name,
       video_url: publicUrlData.publicUrl,
+      tags,
     })
 
     if (insertError) {
