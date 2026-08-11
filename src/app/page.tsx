@@ -55,6 +55,18 @@ export default function HomePage() {
     setClips((prev) => prev.filter((c) => c.id !== clip.id))
   }
 
+  async function handleShare(clip: Clip) {
+    const slug = clip.id
+    const { error } = await supabase.from('clips').update({ share_slug: slug }).eq('id', clip.id)
+    if (error) {
+      alert('生成分享链接失败：' + error.message)
+      return
+    }
+    const url = `${window.location.origin}/share/${slug}`
+    await navigator.clipboard.writeText(url)
+    alert('分享链接已复制：' + url)
+  }
+
   return (
     <main className="max-w-3xl mx-auto p-8">
       <div className="flex justify-between items-center mb-6">
@@ -112,12 +124,20 @@ export default function HomePage() {
           <div key={clip.id} className="border rounded p-4">
             <div className="flex justify-between items-start mb-2">
               <p className="font-medium">{clip.title}</p>
-              <button
-                onClick={() => handleDelete(clip)}
-                className="text-sm text-red-500 hover:underline shrink-0 ml-2"
-              >
-                删除
-              </button>
+              <div className="flex gap-3 shrink-0 ml-2">
+                <button
+                  onClick={() => handleShare(clip)}
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  分享
+                </button>
+                <button
+                  onClick={() => handleDelete(clip)}
+                  className="text-sm text-red-500 hover:underline"
+                >
+                  删除
+                </button>
+              </div>
             </div>
             <p className="text-sm text-gray-400 mb-2">
               {[clip.map, clip.agent, clip.kills, ...(clip.special ?? [])]
