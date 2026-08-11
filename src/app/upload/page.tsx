@@ -64,6 +64,16 @@ export default function UploadPage() {
     )
   }
 
+  function buildDefaultTitle() {
+    const now = new Date()
+    const pad = (n: number) => String(n).padStart(2, '0')
+    const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`
+
+    const parts = [map, agent, kills].filter(Boolean)
+    if (parts.length === 0) return `${file?.name ?? '未命名'} ${dateStr}`
+    return `${parts.join('-')} ${dateStr}`
+  }
+
   async function handleUpload() {
     if (!file) return
     setUploading(true)
@@ -84,7 +94,7 @@ export default function UploadPage() {
       .getPublicUrl(fileName)
 
     const { error: insertError } = await supabase.from('clips').insert({
-      title: title || file.name,
+      title: title || buildDefaultTitle(),
       video_url: publicUrlData.publicUrl,
       map,
       agent,
