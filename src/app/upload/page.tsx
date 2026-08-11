@@ -4,22 +4,31 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
+const MAX_FILE_SIZE = 49 * 1024 * 1024 // Supabase 免费版存储桶硬上限 50MB，留 1MB 余量
+
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
   const [tags, setTags] = useState('')
   const [aiStatus, setAiStatus] = useState<'idle' | 'loading' | 'done' | 'failed'>('idle')
   const [uploading, setUploading] = useState(false)
+  const [sizeError, setSizeError] = useState(false)
   const router = useRouter()
 
   async function handleFileChange(selected: File | null) {
-    setFile(selected)
     setTitle('')
     setTags('')
-    if (!selected) {
-      setAiStatus('idle')
+    setAiStatus('idle')
+
+    if (selected && selected.size > MAX_FILE_SIZE) {
+      setFile(null)
+      setSizeError(true)
       return
     }
+    setSizeError(false)
+    setFile(selected)
+
+    if (!selected) return
 
     setAiStatus('loading')
     try {
@@ -78,6 +87,7 @@ export default function UploadPage() {
   return (
     <main className="max-w-xl mx-auto p-8">
       <h1 className="text-2xl font-bold mb-6">上传高光视频</h1>
+      <p className="text-sm text-gray-500 mb-2">视频文件最大 49MB</p>
       <input
         type="file"
         accept="video/*"
@@ -85,6 +95,11 @@ export default function UploadPage() {
         className="mb-4"
       />
 
+      {sizeError && (
+        <p className="text-sm text-red-500 mb-4">
+          这个文件超过 49MB 了，换一个小一点的片段，或者用剪辑软件先压缩一下
+        </p>
+      )}
       {aiStatus === 'loading' && (
         <p className="text-sm text-gray-500 mb-4">AI 识别中，请稍候...</p>
       )}
