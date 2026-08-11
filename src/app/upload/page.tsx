@@ -50,18 +50,10 @@ export default function UploadPage() {
       const res = await fetch('/api/tag-clip', { method: 'POST', body: form })
       const data = await res.json()
       const parsed = JSON.parse(data.raw)
-      setMap(VALORANT_MAPS.includes(parsed.map) ? parsed.map : '')
-      setAgent(VALORANT_AGENTS.includes(parsed.agent) ? parsed.agent : '')
-      setKills(KILL_OPTIONS.includes(parsed.kills) ? parsed.kills : '')
-      const specialGuess: string[] = (parsed.special || '')
-        .split(',')
-        .map((s: string) => s.trim())
-        .filter((s: string) => SPECIAL_OPTIONS.includes(s))
-      setSpecial(specialGuess)
       setTitle(parsed.title || '')
       setAiStatus('done')
     } catch (e) {
-      console.error('AI 打标签失败，请手动填写', e)
+      console.error('AI 生成标题失败，请手动填写', e)
       setAiStatus('failed')
     }
   }
@@ -127,15 +119,15 @@ export default function UploadPage() {
         </p>
       )}
       {aiStatus === 'loading' && (
-        <p className="text-sm text-gray-500 mb-4">AI 识别中，请稍候...</p>
+        <p className="text-sm text-gray-500 mb-4">AI 生成标题中，请稍候...</p>
       )}
       {aiStatus === 'failed' && (
-        <p className="text-sm text-red-500 mb-4">AI 识别失败，请手动选择</p>
+        <p className="text-sm text-red-500 mb-4">AI 生成标题失败，请手动填写</p>
       )}
 
       <input
         type="text"
-        placeholder="标题（AI 识别后会自动填，也可以手动改）"
+        placeholder="标题（AI 会自动生成建议，也可以手动改）"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         className="border rounded p-2 w-full mb-4"
@@ -149,7 +141,7 @@ export default function UploadPage() {
             onChange={(e) => setMap(e.target.value)}
             className="border rounded p-2 w-full"
           >
-            <option value="">未识别</option>
+            <option value="">请选择</option>
             {VALORANT_MAPS.map((m) => (
               <option key={m} value={m}>{m}</option>
             ))}
@@ -162,7 +154,7 @@ export default function UploadPage() {
             onChange={(e) => setAgent(e.target.value)}
             className="border rounded p-2 w-full"
           >
-            <option value="">未识别</option>
+            <option value="">请选择</option>
             {VALORANT_AGENTS.map((a) => (
               <option key={a} value={a}>{a}</option>
             ))}
