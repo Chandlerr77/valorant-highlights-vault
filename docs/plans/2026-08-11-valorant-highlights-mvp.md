@@ -338,7 +338,7 @@ export function extractFrame(file: File, atSeconds = 2): Promise<Blob> {
      const base64 = buffer.toString('base64')
 
      const response = await ai.models.generateContent({
-       model: 'gemini-2.5-flash',
+       model: 'gemini-flash-latest',
        contents: [
          {
            role: 'user',
@@ -352,11 +352,17 @@ export function extractFrame(file: File, atSeconds = 2): Promise<Blob> {
        ],
      })
 
-     return NextResponse.json({ raw: response.text ?? '' })
+     // Gemini 有时会把 JSON 包在 ```json 代码块里，这里先剥掉再返回
+     const raw = (response.text ?? '').replace(/```json\s*|```\s*/g, '').trim()
+     return NextResponse.json({ raw })
    }
    ```
 
-**验证**：这一步先跑通接口本身，接到 Task 2.4 里一起测试完整流程。
+**变更记录（执行时调整）**：
+1. `gemini-2.5-flash` 对新账号已下线，改用别名 `gemini-flash-latest`
+2. Gemini 返回的文本会包在 ` ```json ` 代码块里，加了一步剥离，否则前端 `JSON.parse` 会报错
+
+**验证**：本地用 curl 测试接口，返回了干净的 JSON（`{"kills":"...", "title":"..."}`），接口本身没问题。完整流程留到 Task 2.4 一起测。
 
 ---
 
