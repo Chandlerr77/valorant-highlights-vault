@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
         parts: [
           { inlineData: { mimeType: 'image/jpeg', data: base64 } },
           {
-            text: '这是一张《瓦罗兰特》(Valorant) 游戏高光时刻截图。请判断画面里是否显示了击杀提示（比如 TRIPLE KILL / QUAD KILL / ACE 等字样），并只用JSON格式回复，不要多余文字，格式：{"kills": "三杀/四杀/五杀/未知", "title": "给这个片段起一个简短的中文标题"}',
+            text: '这是一张《瓦罗兰特》(Valorant) 游戏截图。请识别画面中的信息，只用JSON格式回复，不要多余文字，格式：{"agent": "画面中使用的英雄角色名，识别不出填空字符串", "map": "地图名称，识别不出填空字符串", "kills": "如果画面显示了击杀提示（TRIPLE KILL/QUAD KILL/ACE等），填三杀/四杀/五杀，没有则填空字符串", "title": "结合以上信息给这个片段起一个简短的中文标题"}',
           },
         ],
       },

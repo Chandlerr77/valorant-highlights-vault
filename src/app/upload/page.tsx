@@ -30,7 +30,8 @@ export default function UploadPage() {
       const res = await fetch('/api/tag-clip', { method: 'POST', body: form })
       const data = await res.json()
       const parsed = JSON.parse(data.raw)
-      setTags(parsed.kills || '')
+      const tagParts = [parsed.agent, parsed.map, parsed.kills].filter(Boolean)
+      setTags(tagParts.join(' · '))
       setTitle(parsed.title || '')
       setAiStatus('done')
     } catch (e) {
@@ -100,7 +101,7 @@ export default function UploadPage() {
       />
       <input
         type="text"
-        placeholder="标签，比如 三杀/四杀/五杀（AI 识别后会自动填，也可以手动改）"
+        placeholder="标签，比如 角色 · 地图 · 三杀（AI 识别后会自动填，也可以手动改）"
         value={tags}
         onChange={(e) => setTags(e.target.value)}
         className="border rounded p-2 w-full mb-4"
