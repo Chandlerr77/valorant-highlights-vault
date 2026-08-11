@@ -7,7 +7,7 @@
 **技术栈**：
 - 前端框架：Next.js（React）
 - 数据库 + 文件存储 + 分享链接：Supabase（免费额度够用，不用自己搭服务器）
-- AI 打标签：Anthropic Claude API（读取视频截图，识别击杀数并生成标题）
+- AI 打标签：Google Gemini API（读取视频截图，识别击杀数并生成标题）
 - 部署：Vercel（免费，几分钟出一个真实网址）
 
 **如何使用这份计划**：每个任务都是独立的一小段，做完一个再做下一个。每个任务做完后都有"验证"步骤——按提示操作，看到预期结果就说明这一步做对了，可以进入下一步。如果卡住，把报错信息原样发给 AI 编程工具就行。
@@ -251,15 +251,18 @@ git commit -m "feat: 首页视频列表展示"
 
 ## Day 2：接入 AI 自动打标签
 
-> 设计说明：Claude 目前不能直接"看"视频，所以思路是——在浏览器里从视频中截一帧图片（比如第2秒画面，高光时刻通常这时候击杀提示还在屏幕上），把这张截图发给 Claude 的图片识别能力，让它读画面里的击杀提示文字（如"TRIPLE KILL"），生成标题和标签。
+> 设计说明：AI 目前不能直接"看"视频，所以思路是——在浏览器里从视频中截一帧图片（比如第2秒画面，高光时刻通常这时候击杀提示还在屏幕上），把这张截图发给能识图的 AI 模型，让它读画面里的击杀提示文字（如"TRIPLE KILL"），生成标题和标签。
+>
+> **变更记录（执行时调整）**：原计划用 Claude API，用户希望更便宜的方案，改用 **Google Gemini Flash**（识图能力够用，免费额度大）。以下 Task 2.1 和 2.3 已按 Gemini 更新。
 
-### Task 2.1：申请 Claude API Key
+### Task 2.1：申请 Gemini API Key
 
 **步骤**：
-1. 去 console.anthropic.com 注册账号，创建一个 API Key
-2. 在 `.env.local` 里新增一行：
+1. 去 aistudio.google.com（Google AI Studio）注册账号，可能需要科学上网
+2. 左侧找 "Get API key"，创建一个新 key，复制保存好
+3. 在 `.env.local` 里新增一行：
    ```
-   ANTHROPIC_API_KEY=你的key
+   GEMINI_API_KEY=你的key
    ```
    （这个不加 `NEXT_PUBLIC_` 前缀，因为只在服务器端用，不能暴露给浏览器）
 
@@ -309,7 +312,7 @@ export function extractFrame(file: File, atSeconds = 2): Promise<Blob> {
 
 ---
 
-### Task 2.3：写调用 Claude 打标签的 API 路由
+### Task 2.3：写调用 Gemini 打标签的 API 路由
 
 **文件**：
 - Create: `src/app/api/tag-clip/route.ts`
@@ -318,14 +321,14 @@ export function extractFrame(file: File, atSeconds = 2): Promise<Blob> {
 **步骤**：
 1. 安装依赖：
    ```
-   npm install @anthropic-ai/sdk
+   npm install @google/genai
    ```
 2. 创建 `src/app/api/tag-clip/route.ts`：
    ```typescript
-   import Anthropic from '@anthropic-ai/sdk'
+   import { GoogleGenAI } from '@google/genai'
    import { NextRequest, NextResponse } from 'next/server'
 
-   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 
    export async function POST(req: NextRequest) {
      const formData = await req.formData()
@@ -334,19 +337,14 @@ export function extractFrame(file: File, atSeconds = 2): Promise<Blob> {
      const buffer = Buffer.from(await image.arrayBuffer())
      const base64 = buffer.toString('base64')
 
-     const message = await anthropic.messages.create({
-       model: 'claude-sonnet-5',
-       max_tokens: 200,
-       messages: [
+     const response = await ai.models.generateContent({
+       model: 'gemini-2.5-flash',
+       contents: [
          {
            role: 'user',
-           content: [
+           parts: [
+             { inlineData: { mimeType: 'image/jpeg', data: base64 } },
              {
-               type: 'image',
-               source: { type: 'base64', media_type: 'image/jpeg', data: base64 },
-             },
-             {
-               type: 'text',
                text: '这是一张《瓦罗兰特》(Valorant) 游戏高光时刻截图。请判断画面里是否显示了击杀提示（比如 TRIPLE KILL / QUAD KILL / ACE 等字样），并只用JSON格式回复，不要多余文字，格式：{"kills": "三杀/四杀/五杀/未知", "title": "给这个片段起一个简短的中文标题"}',
              },
            ],
@@ -354,8 +352,7 @@ export function extractFrame(file: File, atSeconds = 2): Promise<Blob> {
        ],
      })
 
-     const textBlock = message.content.find((b) => b.type === 'text')
-     return NextResponse.json({ raw: textBlock?.type === 'text' ? textBlock.text : '' })
+     return NextResponse.json({ raw: response.text ?? '' })
    }
    ```
 
@@ -437,7 +434,7 @@ export function extractFrame(file: File, atSeconds = 2): Promise<Blob> {
 **提交**：
 ```
 git add -A
-git commit -m "feat: 上传时自动截图并用 Claude 识别击杀标签"
+git commit -m "feat: 上传时自动截图并用 Gemini 识别击杀标签"
 ```
 
 ---
@@ -583,7 +580,7 @@ git commit -m "feat: 私密分享链接"
 **步骤**：
 1. 把代码推到 GitHub（如果还没有仓库，先在 github.com 新建一个空仓库，按提示 `git remote add origin ...` 然后 `git push`）
 2. 去 vercel.com，用 GitHub 账号登录，点 "Add New Project"，选择你刚推上去的仓库
-3. 在部署配置页面的 "Environment Variables" 里，把 `.env.local` 里的三个变量原样加进去（`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_ANON_KEY`、`ANTHROPIC_API_KEY`）
+3. 在部署配置页面的 "Environment Variables" 里，把 `.env.local` 里的三个变量原样加进去（`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_ANON_KEY`、`GEMINI_API_KEY`）
 4. 点 Deploy，等 1-2 分钟
 
 **验证**：Vercel 会给你一个形如 `https://valorant-highlights-vault-xxx.vercel.app` 的真实网址，手机和电脑都能直接打开，上传、搜索、分享功能都应该照常工作。
@@ -608,7 +605,7 @@ git commit -m "feat: 私密分享链接"
 1. 录一段 30 秒左右的操作屏幕（上传 → AI 自动打标签 → 搜索 → 生成分享链接），存起来，面试时可以放
 2. 截 2-3 张关键页面截图
 3. 写一句简历描述，可以参考这个方向：
-   > 独立设计并开发个人游戏高光视频管理网站，前端使用 Next.js，后端基于 Supabase 实现文件存储与数据库；接入 Claude 多模态 API 自动识别视频关键帧中的击杀信息并生成标签，实现免手动标注的内容归类；支持关键词检索与私密分享链接生成，完整部署上线。
+   > 独立设计并开发个人游戏高光视频管理网站，前端使用 Next.js，后端基于 Supabase 实现文件存储与数据库；接入 Google Gemini 多模态 API 自动识别视频关键帧中的击杀信息并生成标签，实现免手动标注的内容归类；支持关键词检索与私密分享链接生成，完整部署上线。
 
 **验证**：素材齐了，这份 MVP 就算完整交付了。
 
