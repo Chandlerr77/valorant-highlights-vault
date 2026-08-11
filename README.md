@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 高光存档
 
-## Getting Started
+个人《无畏契约》(VALORANT) 游戏高光视频管理网站。上传录屏，AI 自动生成标题建议，按地图/英雄/击杀数打标签，支持精确筛选和私密分享链接。
 
-First, run the development server:
+**在线体验**：[valorant-highlights-vault.vercel.app](https://valorant-highlights-vault.vercel.app/)
+
+## 功能
+
+- **上传**：拖入视频文件，直接存进云端
+- **AI 标题建议**：上传时自动截取视频关键帧，调用 Google Gemini 多模态 API 生成标题建议，可编辑
+- **结构化标签**：按地图、英雄、击杀数（三杀~七杀）、特殊标签（如经济局翻盘）手动打标，可扩展
+- **精确筛选**：首页四个下拉筛选器，纯前端精确匹配，无需等待
+- **私密分享**：一键生成分享链接，无需登录即可查看单个视频
+- **删除管理**：同步清理数据库记录和云端存储文件
+
+## 技术栈
+
+- **前端**：Next.js 16 (App Router) + React 19 + TypeScript + Tailwind CSS 4
+- **后端**：Supabase（PostgreSQL 数据库 + 对象存储）
+- **AI**：Google Gemini API（`@google/genai`），多模态图像理解生成标题建议
+- **部署**：Vercel
+
+## 本地运行
+
+```bash
+npm install
+```
+
+在项目根目录创建 `.env.local`：
+
+```
+NEXT_PUBLIC_SUPABASE_URL=你的 Supabase 项目地址
+NEXT_PUBLIC_SUPABASE_ANON_KEY=你的 Supabase anon/publishable key
+GEMINI_API_KEY=你的 Gemini API key
+```
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+打开 [http://localhost:3000](http://localhost:3000)。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Supabase 项目需要一张 `clips` 表（字段：`title`、`video_url`、`map`、`agent`、`kills`、`special` text[]、`share_slug`）和一个名为 `clips` 的 Public Storage Bucket，关闭 `clips` 表的 RLS，并为 Storage 的 `clips` 桶添加 insert/select/delete 权限策略。
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 开发过程
 
-## Learn More
+完整的实施计划和迭代记录见 [`docs/plans/`](docs/plans/)，记录了从最初设想（AI 精确识别地图/英雄）到实测发现单帧图像分类不稳定、几次调整方案，最终收敛到"AI 生成开放式建议 + 结构化标签手动确认"的完整过程，包括 Supabase RLS 权限、Storage 文件大小限制、Gemini 免费额度等实际踩坑记录。
 
-To learn more about Next.js, take a look at the following resources:
+## License
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
