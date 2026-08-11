@@ -13,6 +13,13 @@ type Clip = {
   agent: string | null
   kills: string | null
   special: string[] | null
+  created_at: string
+}
+
+function formatDate(iso: string) {
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 export default function HomePage() {
@@ -69,12 +76,15 @@ export default function HomePage() {
 
   return (
     <main className="max-w-3xl mx-auto p-8">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-1">
         <h1 className="text-2xl font-bold">我的高光时刻</h1>
         <Link href="/upload" className="bg-black text-white px-4 py-2 rounded">
           + 上传
         </Link>
       </div>
+      <p className="text-sm text-gray-400 mb-6">
+        私人存放的《无畏契约》游戏高光片段，可按地图/英雄/击杀数筛选，也可以生成私密链接分享给朋友
+      </p>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         <select
@@ -143,6 +153,7 @@ export default function HomePage() {
               {[clip.map, clip.agent, clip.kills, ...(clip.special ?? [])]
                 .filter(Boolean)
                 .join(' · ')}
+              {clip.created_at && <span> · {formatDate(clip.created_at)}</span>}
             </p>
             <video src={clip.video_url} controls className="w-full rounded" />
           </div>
