@@ -38,6 +38,23 @@ export default function HomePage() {
     return true
   })
 
+  async function handleDelete(clip: Clip) {
+    if (!confirm(`确定要删除"${clip.title}"这个视频吗？删除后无法恢复。`)) return
+
+    const storagePath = clip.video_url.split('/public/clips/')[1]
+    if (storagePath) {
+      await supabase.storage.from('clips').remove([storagePath])
+    }
+
+    const { error } = await supabase.from('clips').delete().eq('id', clip.id)
+    if (error) {
+      alert('删除失败：' + error.message)
+      return
+    }
+
+    setClips((prev) => prev.filter((c) => c.id !== clip.id))
+  }
+
   return (
     <main className="max-w-3xl mx-auto p-8">
       <div className="flex justify-between items-center mb-6">
@@ -93,7 +110,15 @@ export default function HomePage() {
       <div className="grid gap-4">
         {filteredClips.map((clip) => (
           <div key={clip.id} className="border rounded p-4">
-            <p className="font-medium mb-2">{clip.title}</p>
+            <div className="flex justify-between items-start mb-2">
+              <p className="font-medium">{clip.title}</p>
+              <button
+                onClick={() => handleDelete(clip)}
+                className="text-sm text-red-500 hover:underline shrink-0 ml-2"
+              >
+                删除
+              </button>
+            </div>
             <p className="text-sm text-gray-400 mb-2">
               {[clip.map, clip.agent, clip.kills, ...(clip.special ?? [])]
                 .filter(Boolean)
