@@ -69,7 +69,3 @@ AI（Gemini）只负责根据截图生成一句开放式的标题建议，不保
 - Supabase（PostgreSQL 数据库 + 对象存储）
 - Google Gemini API（`@google/genai`）
 - Vercel
-
-## License
-
-MIT，见 [LICENSE](./LICENSE)。
