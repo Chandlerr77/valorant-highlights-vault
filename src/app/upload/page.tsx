@@ -3,9 +3,16 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { VALORANT_MAPS, VALORANT_AGENTS, KILL_OPTIONS, SPECIAL_OPTIONS } from '@/lib/valorantData'
 
 const MAX_FILE_SIZE = 49 * 1024 * 1024 // Supabase 免费版存储桶硬上限 50MB，留 1MB 余量
+
+const selectClass =
+  'bg-[#0b0c0a] border border-[#262626] rounded-sm px-3 py-2 w-full text-sm text-[#e5e5e5] focus:outline-none focus:border-[#e5e5e5]'
+const inputClass =
+  'bg-[#0b0c0a] border border-[#262626] rounded-sm px-3 py-2 w-full text-sm text-[#e5e5e5] focus:outline-none focus:border-[#e5e5e5]'
+const labelClass = 'block text-xs text-[#8a8a8a] mb-1'
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null)
@@ -113,44 +120,49 @@ export default function UploadPage() {
   }
 
   return (
-    <main className="max-w-xl mx-auto p-8">
-      <h1 className="text-2xl font-bold mb-6">上传高光视频</h1>
-      <p className="text-sm text-gray-500 mb-2">视频文件最大 49MB</p>
+    <main className="max-w-xl mx-auto px-6 py-12 sm:px-10">
+      <Link href="/" className="text-xs text-[#8a8a8a] hover:text-[#e5e5e5] mb-6 inline-block">
+        ← 高光存档
+      </Link>
+      <h1 className="text-3xl font-bold tracking-tight mb-1">上传视频</h1>
+      <p className="text-sm text-[#8a8a8a] mb-8">视频文件最大 49MB</p>
+
       <input
         type="file"
         accept="video/*"
         onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
-        className="mb-4"
+        className="mb-6 text-sm"
       />
 
       {sizeError && (
-        <p className="text-sm text-red-500 mb-4">
+        <p className="text-sm text-[#ff3b30] mb-4 border-l-2 border-[#ff3b30] pl-2">
           这个文件超过 49MB 了，换一个小一点的片段，或者用剪辑软件先压缩一下
         </p>
       )}
       {aiStatus === 'loading' && (
-        <p className="text-sm text-gray-500 mb-4">AI 生成标题中，请稍候...</p>
+        <p className="text-sm text-[#8a8a8a] mb-4">AI 生成标题中，请稍候...</p>
       )}
       {aiStatus === 'failed' && (
-        <p className="text-sm text-red-500 mb-4">AI 生成标题失败，请手动填写</p>
+        <p className="text-sm text-[#ff3b30] mb-4 border-l-2 border-[#ff3b30] pl-2">
+          AI 生成标题失败，请手动填写
+        </p>
       )}
 
-      <input
-        type="text"
-        placeholder="标题（AI 会自动生成建议，也可以手动改）"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        className="border rounded p-2 w-full mb-4"
-      />
+      <div className="mb-4">
+        <label className={labelClass}>标题</label>
+        <input
+          type="text"
+          placeholder="AI 会自动生成建议，也可以手动改"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className={inputClass}
+        />
+      </div>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <label className="block text-sm text-gray-500 mb-1">地图</label>
-          <select
-            value={map}
-            onChange={(e) => setMap(e.target.value)}
-            className="border rounded p-2 w-full"
-          >
+          <label className={labelClass}>地图</label>
+          <select value={map} onChange={(e) => setMap(e.target.value)} className={selectClass}>
             <option value="">请选择</option>
             {VALORANT_MAPS.map((m) => (
               <option key={m} value={m}>{m}</option>
@@ -158,12 +170,8 @@ export default function UploadPage() {
           </select>
         </div>
         <div>
-          <label className="block text-sm text-gray-500 mb-1">英雄</label>
-          <select
-            value={agent}
-            onChange={(e) => setAgent(e.target.value)}
-            className="border rounded p-2 w-full"
-          >
+          <label className={labelClass}>英雄</label>
+          <select value={agent} onChange={(e) => setAgent(e.target.value)} className={selectClass}>
             <option value="">请选择</option>
             {VALORANT_AGENTS.map((a) => (
               <option key={a} value={a}>{a}</option>
@@ -173,12 +181,8 @@ export default function UploadPage() {
       </div>
 
       <div className="mb-4">
-        <label className="block text-sm text-gray-500 mb-1">击杀数</label>
-        <select
-          value={kills}
-          onChange={(e) => setKills(e.target.value)}
-          className="border rounded p-2 w-full"
-        >
+        <label className={labelClass}>击杀数</label>
+        <select value={kills} onChange={(e) => setKills(e.target.value)} className={selectClass}>
           <option value="">无</option>
           {KILL_OPTIONS.map((k) => (
             <option key={k} value={k}>{k}</option>
@@ -186,11 +190,11 @@ export default function UploadPage() {
         </select>
       </div>
 
-      <div className="mb-6">
-        <label className="block text-sm text-gray-500 mb-1">特殊标签</label>
+      <div className="mb-8">
+        <label className={labelClass}>特殊标签</label>
         <div className="flex gap-4">
           {SPECIAL_OPTIONS.map((option) => (
-            <label key={option} className="flex items-center gap-1 text-sm">
+            <label key={option} className="flex items-center gap-2 text-sm text-[#e5e5e5]">
               <input
                 type="checkbox"
                 checked={special.includes(option)}
@@ -205,7 +209,7 @@ export default function UploadPage() {
       <button
         onClick={handleUpload}
         disabled={!file || uploading || aiStatus === 'loading'}
-        className="bg-black text-white px-4 py-2 rounded disabled:opacity-50"
+        className="border border-[#e5e5e5] px-4 py-2 text-sm hover:bg-[#e5e5e5] hover:text-black transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[#e5e5e5]"
       >
         {uploading ? '上传中...' : '上传'}
       </button>

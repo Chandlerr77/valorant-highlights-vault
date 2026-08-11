@@ -5,16 +5,29 @@ export default async function SharePage({ params }: { params: Promise<{ slug: st
   const { data: clip } = await supabase.from('clips').select('*').eq('share_slug', slug).single()
 
   if (!clip) {
-    return <main className="p-8">链接无效或已失效</main>
+    return (
+      <main className="max-w-xl mx-auto px-6 py-12 sm:px-10">
+        <p className="text-sm text-[#8a8a8a]">链接无效或已失效</p>
+      </main>
+    )
   }
 
   return (
-    <main className="max-w-xl mx-auto p-8">
-      <p className="font-medium mb-2 text-xl">{clip.title}</p>
-      <p className="text-sm text-gray-400 mb-4">
-        {[clip.map, clip.agent, clip.kills, ...(clip.special ?? [])].filter(Boolean).join(' · ')}
-      </p>
-      <video src={clip.video_url} controls autoPlay className="w-full rounded" />
+    <main className="max-w-xl mx-auto px-6 py-12 sm:px-10">
+      <p className="text-2xl font-bold tracking-tight mb-3">{clip.title}</p>
+      {(clip.map || clip.agent || clip.kills || (clip.special ?? []).length > 0) && (
+        <div className="flex flex-wrap gap-2 mb-6 text-xs tabular-nums">
+          {[clip.map, clip.agent, ...(clip.special ?? [])].filter(Boolean).map((tag: string, i: number) => (
+            <span key={i} className="border-l-2 border-[#8a8a8a] pl-2 text-[#8a8a8a]">
+              {tag}
+            </span>
+          ))}
+          {clip.kills && (
+            <span className="border-l-2 border-[#ff3b30] pl-2 text-[#ff3b30]">{clip.kills}</span>
+          )}
+        </div>
+      )}
+      <video src={clip.video_url} controls autoPlay className="w-full" />
     </main>
   )
 }
